@@ -1,3 +1,9 @@
+name: Zephyr Build
+
+on:
+  push:
+    branches: [ master ]
+
 jobs:
   build:
     runs-on: ubuntu-latest
