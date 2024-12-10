@@ -20,3 +20,6 @@ This project includes unit tests to ensure the correctness of functionalities. T
 
 ## CI/CD
 This project utilizes GitHub Actions for CI/CD implementation. This ensures that all changes are automatically tested before being merged into the main branch. The GitHub Actions configuration includes automated code checks and running unit tests.
+
+<h2>License</h2>
+<p>This project is licensed under the <a href="LICENSE">MIT License</a>.</p>

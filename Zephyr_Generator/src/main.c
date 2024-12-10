@@ -15,7 +15,11 @@
 // init gpio
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_NODELABEL(blinking_led), gpios);
 
-
+/**
+ * @function: main
+ * @description: main function
+ * @return: 0 on success, -1 on error
+ */
 int main(void)
 {
 	if(!device_is_ready(led.port)) {
@@ -36,13 +40,13 @@ int main(void)
 		if(ret != 0) {
 			return -1;
 		}
-		k_sleep(K_MSEC(1000));
+		k_sleep(K_MSEC(100));
 		ret = gpio_pin_toggle_dt(&led);
 		printf("GPIO pin toggle on %s\n", CONFIG_BOARD_TARGET);
 		if(ret != 0) {
 			return -1;
 		}
-		k_sleep(K_MSEC(1000));
+		k_sleep(K_MSEC(200));
 	}
 
 	return 0;
