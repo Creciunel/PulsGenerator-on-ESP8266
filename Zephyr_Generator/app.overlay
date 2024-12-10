@@ -6,4 +6,25 @@
             label = "blinking_led";
         };
     };
+
+    buttons {
+        compatible = "gpio-keys";
+        
+        button_a: button_a {
+            gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;  // Pin for Button A
+            label = "Button A";
+        };
+        
+        button_b: button_b {
+            gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;  // Pin for Button B
+            label = "Button B";
+        };
+        
+        button_c: button_c { 
+            gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;  // Pin for Button C
+            label = "Button C";
+ 
+        };
+     };
+
 };

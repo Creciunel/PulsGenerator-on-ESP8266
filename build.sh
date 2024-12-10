@@ -4,9 +4,11 @@
 
 cd Zephyr_Generator
 
-west build
+west build 
 
-# west flash
+west flash
+
+west espressif monitor
 
 # west build -p always -b esp32_devkitc_wroom/esp32/procpu .
 # west flash
