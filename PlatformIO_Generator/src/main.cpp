@@ -1,67 +1,84 @@
-#include "main.hpp"
+#include <Adafruit_MCP4725.h>
+#include <Adafruit_INA219.h>
+#include <Arduino.h>
 
-void setup()
-{
-    Serial.begin(115200);
-    // Activează DAC Channel 1 (GPIO25)
-    // dac_output_enable(DAC_CHANNEL_1);
-    dac.begin(DAC_ADDRESS);
+Adafruit_MCP4725 dac;
+Adafruit_INA219 ina219;
+
+#define DAC_ADDRESS 0x60
+#define MAX_VOLTAGE 3.3 // Tensiunea maximă în volți
+#define RESOLUTION 4095 // Rezoluția DAC-ului (12 biți)
+
+float voltage = 0.0;      // Tensiunea curentă
+float increase_step = 0.05; // Creștere tensiune (în volți)
+float decrease_step = 0.03; // Scădere tensiune (în volți)
+int delay_time = 200;       // Întârziere între schimbările de tensiune (ms)
+
+TaskHandle_t dacTaskHandle = NULL;
+
+void dacTask(void *pvParameters) {
+    for (;;) {
+        // Crește tensiunea
+        voltage += increase_step;
+
+        // Verifică limita superioară
+        if (voltage > MAX_VOLTAGE) {
+            voltage = 0; // Revine la 0 dacă depășește 3.3V
+            Serial.println("Tensiunea a atins maximul și a fost resetată.");
+        }
+
+        // Setează tensiunea pe DAC
+        dac.setVoltage((uint16_t)(voltage * RESOLUTION / MAX_VOLTAGE), false);
+        Serial.print("Tensiune curentă (după creștere): ");
+        Serial.print(voltage, 2); // Afișează cu două zecimale
+        Serial.println(" V");
+
+        vTaskDelay(pdMS_TO_TICKS(delay_time)); // Întârziere între iterații
+
+        // Scade tensiunea
+        voltage -= decrease_step;
+
+        // Verifică limita inferioară
+        if (voltage < 0) {
+            voltage = 0; // Asigură-te că nu scade sub 0
+            Serial.println("Tensiunea a atins minimul.");
+        }
+
+        // Setează tensiunea pe DAC
+        dac.setVoltage((uint16_t)(voltage * RESOLUTION / MAX_VOLTAGE), false);
+        Serial.print("Tensiune curentă (după scădere): ");
+        Serial.print(voltage, 2); // Afișează cu două zecimale
+        Serial.println(" V");
+
+        vTaskDelay(pdMS_TO_TICKS(delay_time)); // Întârziere între iterații
+    }
 }
 
-void loop()
-{
+void setup() {
+    Serial.begin(115200);
 
-    uint32_t counter;
-    // Run through the full 12-bit scale for a triangle wave
-    for (counter = 0; counter < 4095; counter++)
-    {
-        dac.setVoltage(counter, false);
-    }
-    for (counter = 4095; counter > 0; counter--)
-    {
-        dac.setVoltage(counter, false);
+    if (!dac.begin(DAC_ADDRESS)) {
+        Serial.println("Could not find a valid MCP4725 DAC!");
+        while (1);
     }
 
-    // static float voltage = 0.0;
-    // static bool firstIteration = true; // Flag pentru prima iterație
+    if (!ina219.begin()) {
+        Serial.println("Could not find a valid INA219 sensor!");
+        while (1);
+    }
 
-    // if (firstIteration) {
-    //     // Crește cu 50 mV doar la prima iterație
-    //     voltage += 0.05;
-    //     Serial.println("Prima iterație: Creștere cu 50 mV");
-    //     firstIteration = false; // Schimbă flag-ul
-    // } else {
-    //     // Crește cu 60 mV
-    //     voltage += 0.09;
-    //     Serial.println("Creștere cu 60 mV");
-    // }
+    // Creează sarcina FreeRTOS pentru DAC
+    xTaskCreatePinnedToCore(
+        dacTask,            // Funcția sarcinii
+        "DAC Task",         // Numele sarcinii
+        2048,               // Dimensiunea stivei (în bytes)
+        NULL,               // Parametrii funcției (nefolosiți aici)
+        1,                  // Prioritatea sarcinii
+        &dacTaskHandle,     // Handle-ul sarcinii
+        0                   // Rulează pe Core 0
+    );
+}
 
-    // // Asigură-te că tensiunea nu depășește 3.3V
-    // if (voltage > 3.3) {
-    //     voltage = 0;
-    //     Serial.println("Tensiunea a atins maximul de 3.3V");
-    // }
-
-    // // Setează tensiunea DAC-ului
-    // dac_output_voltage(DAC_CHANNEL_1, (uint8_t)(voltage * 255 / 3.3));
-    // Serial.print("Tensiune curentă: ");
-    // Serial.print(voltage, 2); // Afișează cu două zecimale
-    // Serial.println(" V");
-    // delay(10); // Așteaptă 100 ms
-
-    // // Scade cu 30 mV
-    // voltage -= 0.03;
-
-    // // Asigură-te că tensiunea nu devine mai mică de 0V
-    // if (voltage < 0) {
-    //     voltage = 0;
-    //     Serial.println("Tensiunea a atins minimul de 0V");
-    // }
-
-    // // Setează tensiunea DAC-ului
-    // dac_output_voltage(DAC_CHANNEL_1, (uint8_t)(voltage * 255 / 3.3));
-    // Serial.print("Tensiune curentă după scădere: ");
-    // Serial.print(voltage, 2); // Afișează cu două zecimale
-    // Serial.println(" V");
-    // delay(20); // Așteaptă 200 ms
+void loop() {
+    // Bucla principală rămâne liberă pentru alte funcționalități
 }
